@@ -19,7 +19,11 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 import org.apache.commons.codec.binary.Hex;
+
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
  
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Utility {
 
 	private static final Logger LOGGER = Utility.getLogger(Utility.class.getName());
@@ -28,45 +32,8 @@ public class Utility {
 	 * Chunk size file.
 	 */
 	private static final int CHUNK_SIZE = 16384;
-
-	/**
-	 * Constructor.
-	 */
-	private Utility() {
-
-	}
-
-	/**
-	 * Get key from P12 from alias and password.
-	 * 
-	 * @param password		p12 password
-	 * @param alias			p12 alias
-	 * @param p12			certificate
-	 * @return				key
-	 * @throws Exception
-	 */
-	public static Key extractKeyByAliasFromP12(char[] password, String alias, byte[] p12) throws Exception {
-		try (ByteArrayInputStream bais = new ByteArrayInputStream(p12)) {
-			java.security.KeyStore keyStore = KeyStore.getInstance("PKCS12", "BC");
-			keyStore.load(bais, password);
-			//If no alias is specified try to find a key and return the first found
-			if (nullOrEmpty(alias)) {
-				Enumeration<String> aliases = keyStore.aliases();
-				while (aliases.hasMoreElements()) {
-					String a = aliases.nextElement();
-					if (keyStore.isKeyEntry(a)) {
-						LOGGER.info(()->String.format("Using alias: %s",a));
-						return keyStore.getKey(a, password);
-					}
-				}
-			} else {
-				return keyStore.getKey(alias, password);
-			}
-		} catch (Exception e) {
-//			LOGGER.info(String.format("Error while extracting key by alias from p12: %s",ExceptionUtils.getStackTrace(e)));
-		}
-		return null;
-	}
+ 
+ 
 
 	/**
 	 * Get file from file system.
@@ -136,16 +103,7 @@ public class Utility {
 		final MessageDigest digest = MessageDigest.getInstance("SHA-256");
 		return Hex.encodeHexString(digest.digest(objectToEncode));
 	}
-
-	/**
-	 * Check if a string is null or empty.
-	 * 
-	 * @param str	string to check
-	 * @return		flag
-	 */
-	public static boolean nullOrEmpty(String str) {
-		return (str == null) || str.length() == 0;
-	}
+ 
 
 	public static Logger getLogger(String className) {
 		final Logger logger = Logger.getLogger(className);

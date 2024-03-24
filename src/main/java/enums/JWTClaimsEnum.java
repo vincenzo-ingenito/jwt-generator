@@ -47,18 +47,8 @@ public enum JWTClaimsEnum {
  
 	JWT("JWT"),
  
-	ATTACHMENT_HASH("attachment_hash"),
- 
-	FILE_HASH("file_hash"),
+	FILE_HASH("file_hash");
 	 
-	VECTOR_HASH_CSR("vector_hash_csr"),
-	 
-	VECTOR_ID("vector_id"),
- 
-	PEM_PATH("pem_path"),
- 
-	P12_PATH("p12_path");
- 
 	private String key;
 
 	 
