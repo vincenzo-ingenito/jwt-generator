@@ -103,6 +103,3 @@ public class Launcher {
 ```
 ## Licenza
 Questo progetto è rilasciato sotto la Licenza MIT.
-
-
-
