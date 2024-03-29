@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>io.github.vincenzo-ingenito</groupId>
 	<artifactId>jwt-generator</artifactId>
-	<version>0.0.1</version>
+	<version>0.0.2</version>
 	<name>Jwt Generator</name>
 	<description>Jwt Generator project</description>
 	<url>https://github.com/vincenzo-ingenito/jwt-generator</url>
