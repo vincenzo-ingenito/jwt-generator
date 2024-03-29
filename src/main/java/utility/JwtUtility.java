@@ -1,10 +1,9 @@
 package utility;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -39,12 +38,14 @@ public class JwtUtility {
 
 	private static final Logger LOGGER = Utility.getLogger(JwtUtility.class.getName());
 
-	public static TokenResponseDTO getTokens(TokenRequestDTO requestDto, File privateKey, byte[] pemByte) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
+	public static TokenResponseDTO getTokens(TokenRequestDTO requestDto, byte[] privateKey, byte[] pemByte) throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
 		validateField(requestDto, privateKey, pemByte);
 		RSAPrivateKey privKey = readPKCS8PrivateKey(privateKey);
 		String pem = cleanPem(pemByte);
 		Date iat = new Date();
-		Date exp = Utility.addHoursToJavaUtilDate(iat, 24);
+
+		Integer duration = requestDto.getDurationHours()==null ? 24 : requestDto.getDurationHours();
+		Date exp = Utility.addHoursToJavaUtilDate(iat, duration);
 
 		String jwt = generateAuthJWT(requestDto, privKey, pem, iat, exp);
 		String claimsJwt = generateSignatureJWT(requestDto, privKey, pem, iat, exp);
@@ -52,95 +53,105 @@ public class JwtUtility {
 		return new TokenResponseDTO(jwt, claimsJwt);
 	}
 
-	private static RSAPrivateKey readPKCS8PrivateKey(File file) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
+
+	private static RSAPrivateKey readPKCS8PrivateKey(byte[] key) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
 		KeyFactory factory = KeyFactory.getInstance("RSA");
 
-		try (FileReader keyReader = new FileReader(file); PemReader pemReader = new PemReader(keyReader)) {
+		PemObject pemObject = readPemObject(key);
+		byte[] content = pemObject.getContent();
+		PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(content);
+		return (RSAPrivateKey) factory.generatePrivate(privKeySpec);
+	}
 
-			PemObject pemObject = pemReader.readPemObject();
-			byte[] content = pemObject.getContent();
-			PKCS8EncodedKeySpec privKeySpec = new PKCS8EncodedKeySpec(content);
-			return (RSAPrivateKey) factory.generatePrivate(privKeySpec);
+
+	public static PemObject readPemObject(byte[] data) throws IOException {
+		ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
+		InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+		try (PemReader pemReader = new PemReader(inputStreamReader)) {
+			return pemReader.readPemObject();
 		}
 	}
 
-	private static void validateField(TokenRequestDTO requestDto, File privateKey, byte[] pemByte) {
-		if(pemByte == null || pemByte.length == 0) {
-			throw new IllegalArgumentException("");
-		}
-		
+
+	private static void validateField(TokenRequestDTO requestDto, byte[] privateKey, byte[] pemByte) {
+
 		if(requestDto == null) {
-			throw new IllegalArgumentException("");
+			throw new IllegalArgumentException("Required request");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getIss())) {
 			throw new IllegalArgumentException("Required issuer");
 		}
-		
-		if(StringUtility.isNullOrEmpty(requestDto.getIss())) {
-			throw new IllegalArgumentException("Required issuer");
-		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getJti())) {
 			throw new IllegalArgumentException("Required jti");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getAud())) {
 			throw new IllegalArgumentException("Required aud");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getSub())) {
 			throw new IllegalArgumentException("Required sub");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getSubject_organization_id())) {
 			throw new IllegalArgumentException("Required subject_organization_id");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getSubject_organization())) {
 			throw new IllegalArgumentException("Required subject_organization");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getLocality())) {
 			throw new IllegalArgumentException("Required locality");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getSubject_role())) {
 			throw new IllegalArgumentException("Required subject role");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getPerson_id())) {
 			throw new IllegalArgumentException("Required person_id");
 		}
-		
+
 		if(requestDto.getPurpose_of_use() == null) {
 			throw new IllegalArgumentException("Required purpose_of_use");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getResource_hl7_type())) {
 			throw new IllegalArgumentException("Required hl7_type");
 		}
-		
+
 		if(requestDto.getAction_id() == null) {
 			throw new IllegalArgumentException("Required action id");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getSubject_application_id())) {
 			throw new IllegalArgumentException("Required subject_application_id");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getSubject_application_vendor())) {
 			throw new IllegalArgumentException("Required subject_application_vendor");
 		}
-		
+
 		if(StringUtility.isNullOrEmpty(requestDto.getSubject_application_version())) {
 			throw new IllegalArgumentException("Required subject_application_version");
 		}
-		
-		
+
+		if(privateKey == null || privateKey.length == 0) {
+			throw new IllegalArgumentException("Required priv key");
+		}
+
+		if(pemByte == null || pemByte.length == 0) {
+			throw new IllegalArgumentException("Required pem");
+		}
+
+
 	}
-	
+
 	private static String cleanPem(byte[] pem) {
+		LOGGER.info("Clean pem");
 		return new String(pem).replace("-----BEGIN PUBLIC KEY-----", "").replaceAll(System.lineSeparator(), "")
 				.replace("-----END PUBLIC KEY-----", "").replace("-----BEGIN CERTIFICATE-----", "")
 				.replaceAll(System.lineSeparator(), "").replace("-----END CERTIFICATE-----", "").replace("\n", "");
@@ -167,7 +178,7 @@ public class JwtUtility {
 
 		return Jwts.builder().setHeaderParams(headerParams).setClaims(claims).signWith(SignatureAlgorithm.RS256, privateKey).compact();
 	}
-	
+
 	private static String generateSignatureJWT(TokenRequestDTO requestDto, Key privateKey, String x5c, Date iat, Date exp) throws NoSuchAlgorithmException {
 		Map<String, Object> headerParams  = getGenericClaims(x5c, iat, exp);
 
@@ -188,14 +199,14 @@ public class JwtUtility {
 		claims.put(JWTClaimsEnum.SUBJECT_ORGANIZATION.getKey(), requestDto.getSubject_organization());
 		claims.put(JWTClaimsEnum.SUBJECT_ORGANIZATION_ID.getKey(), requestDto.getSubject_organization_id());
 		claims.put(JWTClaimsEnum.SUBJECT_ROLE.getKey(), requestDto.getSubject_role());
-		if (Utility.isPdf(requestDto.getFile_hash())) {
-			String hash = Utility.encodeSHA256(requestDto.getFile_hash());
+		if (Utility.isPdf(requestDto.getPdf())) {
+			String hash = Utility.encodeSHA256(requestDto.getPdf());
 			claims.put(JWTClaimsEnum.FILE_HASH.getKey(), hash);
 		}
 		claims.put(JWTClaimsEnum.ISS.getKey(), "integrity:" + cleanIss(requestDto.getIss()));
 		return Jwts.builder().setHeaderParams(headerParams).setClaims(claims).signWith(SignatureAlgorithm.RS256, privateKey).compact();
 	}
-	
+
 
 	/**
 	 * Clean ISS.
@@ -209,7 +220,7 @@ public class JwtUtility {
 		return iss.replaceFirst("integrity:", "").replaceFirst("auth:", "");
 	}
 
-	
+
 	private static Map<String, Object> getGenericClaims(final String x5c, final Date iat, final Date exp){
 		Map<String, Object> obj = new HashMap<>();
 		obj.put(JWTClaimsEnum.ALG.getKey(), SignatureAlgorithm.RS256);
@@ -219,7 +230,7 @@ public class JwtUtility {
 		obj.put(JWTClaimsEnum.EXP.getKey(), exp.getTime() / 1000);
 		return obj;
 	}
-	
+
 	/**
 	 * Validate JWT.
 	 * 
@@ -239,7 +250,7 @@ public class JwtUtility {
 		}
 		return out;
 	}
-	
+
 	/**
 	 * Get public key.
 	 * 

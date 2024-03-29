@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class TokenRequestDTO {
 
-	private int durationHours = 24;
+	private Integer durationHours;
 
 	private String sub;
 	
@@ -41,6 +41,6 @@ public class TokenRequestDTO {
 	
 	private String person_id;
 	
-	private byte[] file_hash;
+	private byte[] pdf;
 
 }
