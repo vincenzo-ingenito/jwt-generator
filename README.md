@@ -104,3 +104,5 @@ public class Launcher {
 ## Licenza
 
 Questo progetto è distribuito sotto la [Licenza Apache, Versione 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+
+[![Licenza Apache, Versione 2.0](https://img.shields.io/badge/Licenza-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
