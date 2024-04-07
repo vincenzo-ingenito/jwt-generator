@@ -13,8 +13,7 @@
 	<scm>
 		<connection>https://github.com/vincenzo-ingenito/jwt-generator</connection>
 		<url>https://github.com/vincenzo-ingenito/jwt-generator</url>
-		<developerConnection>
-			scm:git:https://github.com/vincenzo-ingenito/jwt-generator</developerConnection>
+		<developerConnection>scm:git:https://github.com/vincenzo-ingenito/jwt-generator</developerConnection>
 	</scm>
 
 	<licenses>
