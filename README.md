@@ -12,7 +12,7 @@ Per utilizzare questa libreria nel tuo progetto Maven, aggiungi la seguente dipe
 <dependency>
     <groupId>io.github.vincenzo-ingenito</groupId>
     <artifactId>jwt-generator</artifactId>
-    <version>LAST_VERSION</version>
+    <version>0.0.2</version>
 </dependency>
 ```
 
